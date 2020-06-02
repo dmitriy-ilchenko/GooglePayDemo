@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">GooglePayDemo</string>
+    <string name="activity_main_title">Google Pay Demo</string>
+    <string name="activity_main_price_hint">Price</string>
+    <string name="activity_main_pay_button_text">Pay</string>
+    <string name="activity_main_error_dialog_title">Error</string>
+    <string name="activity_main_error_dialog_positive_button_text">OK</string>
+    <string name="activity_main_error_google_pay_is_not_ready_error_text">Unfortunately, Google Pay is not available on this device</string>
+    <string name="activity_main_success_dialog_title">Success</string>
+    <string name="activity_main_success_payment">Payment is successful. Response:\n%s</string>
+</resources>
