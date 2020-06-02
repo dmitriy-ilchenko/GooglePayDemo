@@ -7,26 +7,19 @@ import com.google.android.gms.wallet.*
 import io.reactivex.Single
 import io.reactivex.SingleEmitter
 import org.json.JSONArray
-import org.json.JSONObject
 
 class GooglePay(private val activity: Activity) {
 
     companion object {
         private const val PAYMENTS_ENVIRONMENT = WalletConstants.ENVIRONMENT_TEST
-
-        private val SUPPORTED_METHODS = listOf("PAN_ONLY", "CRYPTOGRAM_3DS")
-        private val SUPPORTED_NETWORKS = listOf("AMEX", "DISCOVER", "JCB", "MASTERCARD", "VISA")
-
-        private const val COUNTRY_CODE = "US"
-        private const val CURRENCY_CODE = "USD"
-        private val SHIPPING_SUPPORTED_COUNTRIES = listOf("US", "GB", "RU")
-
-        private val PAYMENT_GATEWAY_TOKENIZATION_PARAMETERS = mapOf(
-            "gateway" to "example",
-            "gatewayMerchantId" to "exampleGatewayMerchantId"
-        )
-
+        private const val API_VERSION = 2
+        private const val API_VERSION_MINOR = 0
         private const val MERCHANT_NAME = "Example Merchant"
+        private val ALLOWED_AUTH_METHODS = JSONArray(listOf("PAN_ONLY", "CRYPTOGRAM_3DS"))
+        private val ALLOWED_CARD_NETWORKS = JSONArray(listOf("AMEX", "DISCOVER", "JCB", "MASTERCARD", "VISA"))
+        private const val CURRENCY_CODE = "USD"
+        private const val GATEWAY = "example"
+        private const val GATEWAY_MERCHANT_ID = "exampleGatewayMerchantId"
     }
 
     private val walletOptions = Wallet.WalletOptions.Builder()
@@ -40,7 +33,7 @@ class GooglePay(private val activity: Activity) {
     }
 
     fun pay(price: String, activityRequestCode: Int) {
-        val request = PaymentDataRequest.fromJson(createPaymentDataRequest(price).toString())
+        val request = PaymentDataRequest.fromJson(createPaymentDataRequest(price))
         AutoResolveHelper.resolveTask(
             paymentsClient.loadPaymentData(request),
             activity,
@@ -57,7 +50,7 @@ class GooglePay(private val activity: Activity) {
     }
 
     private fun isReadyToPay(emitter: SingleEmitter<Boolean>) {
-        val request = IsReadyToPayRequest.fromJson(createIsReadyToPayRequest().toString())
+        val request = IsReadyToPayRequest.fromJson(createIsReadyToPayRequest())
         val task = paymentsClient.isReadyToPay(request)
         task.addOnCompleteListener { completedTask ->
             try {
@@ -69,72 +62,50 @@ class GooglePay(private val activity: Activity) {
         }
     }
 
-    private fun createIsReadyToPayRequest(): JSONObject {
-        return createBaseRequest().apply {
-            put("allowedPaymentMethods", JSONArray().put(createBaseCardPaymentMethod()))
-        }
+    private fun createIsReadyToPayRequest(): String {
+        return "{\n" +
+                "  \"apiVersion\": ${API_VERSION},\n" +
+                "  \"apiVersionMinor\": ${API_VERSION_MINOR},\n" +
+                "  \"allowedPaymentMethods\": [\n" +
+                "    {\n" +
+                "      \"type\": \"CARD\",\n" +
+                "      \"parameters\": {\n" +
+                "        \"allowedAuthMethods\": $ALLOWED_AUTH_METHODS,\n" +
+                "        \"allowedCardNetworks\": $ALLOWED_CARD_NETWORKS\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}"
     }
 
-    private fun createPaymentDataRequest(price: String): JSONObject {
-        return createBaseRequest().apply {
-            put("allowedPaymentMethods", JSONArray().put(createCardPaymentMethod()))
-            put("transactionInfo", createTransactionInfo(price))
-            put("merchantInfo", createMerchantInfo())
-            put("shippingAddressRequired", true)
-
-            val shippingAddressParameters = JSONObject().apply {
-                put("phoneNumberRequired", false)
-                put("allowedCountryCodes", JSONArray(SHIPPING_SUPPORTED_COUNTRIES))
-            }
-            put("shippingAddressParameters", shippingAddressParameters)
-        }
-    }
-
-    private fun createCardPaymentMethod(): JSONObject {
-        return createBaseCardPaymentMethod().apply {
-            put("tokenizationSpecification", createGatewayTokenizationSpecification())
-        }
-    }
-
-    private fun createGatewayTokenizationSpecification(): JSONObject {
-        return JSONObject().apply {
-            put("type", "PAYMENT_GATEWAY")
-            put("parameters", JSONObject(PAYMENT_GATEWAY_TOKENIZATION_PARAMETERS))
-        }
-    }
-
-    private fun createTransactionInfo(price: String): JSONObject {
-        return JSONObject().apply {
-            put("totalPrice", price)
-            put("totalPriceStatus", "FINAL")
-            put("countryCode", COUNTRY_CODE)
-            put("currencyCode", CURRENCY_CODE)
-        }
-    }
-
-    private fun createMerchantInfo(): JSONObject {
-        return JSONObject().put("merchantName", MERCHANT_NAME)
-    }
-
-    private fun createBaseCardPaymentMethod(): JSONObject {
-        val parameters = JSONObject().apply {
-            put("allowedAuthMethods", JSONArray(SUPPORTED_METHODS))
-            put("allowedCardNetworks", JSONArray(SUPPORTED_NETWORKS))
-            put("billingAddressRequired", true)
-            put("billingAddressParameters", JSONObject().apply {
-                put("format", "FULL")
-            })
-        }
-        return JSONObject().apply {
-            put("type", "CARD")
-            put("parameters", parameters)
-        }
-    }
-
-    private fun createBaseRequest(): JSONObject {
-        return JSONObject().apply {
-            put("apiVersion", 2)
-            put("apiVersionMinor", 0)
-        }
+    private fun createPaymentDataRequest(price: String): String {
+        return "{\n" +
+                "  \"apiVersion\": ${API_VERSION},\n" +
+                "  \"apiVersionMinor\": ${API_VERSION_MINOR},\n" +
+                "  \"merchantInfo\": {\n" +
+                "    \"merchantName\": \"$MERCHANT_NAME\"\n" +
+                "  },\n" +
+                "  \"allowedPaymentMethods\": [\n" +
+                "    {\n" +
+                "      \"type\": \"CARD\",\n" +
+                "      \"parameters\": {\n" +
+                "        \"allowedAuthMethods\": $ALLOWED_AUTH_METHODS,\n" +
+                "        \"allowedCardNetworks\": $ALLOWED_CARD_NETWORKS\n" +
+                "      },\n" +
+                "      \"tokenizationSpecification\": {\n" +
+                "        \"type\": \"PAYMENT_GATEWAY\",\n" +
+                "        \"parameters\": {\n" +
+                "          \"gateway\": \"$GATEWAY\",\n" +
+                "          \"gatewayMerchantId\": \"$GATEWAY_MERCHANT_ID\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"transactionInfo\": {\n" +
+                "    \"totalPriceStatus\": \"FINAL\",\n" +
+                "    \"totalPrice\": \"$price\",\n" +
+                "    \"currencyCode\": \"$CURRENCY_CODE\"\n" +
+                "  }\n" +
+                "}"
     }
 }
