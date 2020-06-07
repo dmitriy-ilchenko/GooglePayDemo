@@ -67,7 +67,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun togglePayButton() {
         val price = edit_text_price.text.toString().toDoubleOrNull()
-        button_pay.isEnabled = price != null
+        button_pay.isVisible = price != null
     }
 
     private fun checkIfGooglePayReady() {

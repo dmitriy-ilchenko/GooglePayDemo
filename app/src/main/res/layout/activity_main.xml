@@ -46,18 +46,23 @@
             />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <Button
-        android:id="@+id/button_pay"
+    <FrameLayout
+        android:id="@+id/layout_pay_button_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/default_margin"
-        android:layout_marginStart="@dimen/default_margin"
-        android:layout_marginEnd="@dimen/default_margin"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:text="@string/activity_main_pay_button_text"
-        android:enabled="false"
-        style="@style/ButtonStyle"
-        />
+        >
+        <include
+            android:id="@+id/button_pay"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/google_pay_button_height"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:layout_marginStart="@dimen/default_margin"
+            android:layout_marginEnd="@dimen/default_margin"
+            layout="@layout/layout_google_pay_button"
+            android:visibility="gone"
+            />
+    </FrameLayout>
 
     <ProgressBar
         android:id="@+id/progress_bar_loading"
@@ -74,7 +79,7 @@
         android:id="@+id/group_main_content"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:constraint_referenced_ids="input_layout_price, button_pay"
+        app:constraint_referenced_ids="input_layout_price, layout_pay_button_container"
         />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
